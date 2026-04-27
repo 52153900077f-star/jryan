@@ -1,4 +1,44 @@
 import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+
+st.set_page_config(page_title="智慧理財系統", layout="wide")
+
+# ====== 標題 ======
+st.markdown("""
+    <h1 style='text-align: center; color: #4CAF50;'>💰 智慧理財與預算管理系統</h1>
+""", unsafe_allow_html=True)
+
+# ====== 初始化 ======
+if "data" not in st.session_state:
+    st.session_state.data = []
+
+if "budget" not in st.session_state:
+    st.session_state.budget = 20000
+
+# ====== 側邊欄 ======
+st.sidebar.header("📥 新增收支")
+amount = st.sidebar.number_input("金額", min_value=0)
+category = st.sidebar.selectbox("類別", ["餐飲", "交通", "娛樂", "其他"])
+type_ = st.sidebar.radio("類型", ["收入", "支出"])
+
+if st.sidebar.button("➕ 新增紀錄"):
+    st.session_state.data.append({
+        "amount": amount,
+        "category": category,
+        "type": type_
+    })
+
+# ====== 預算設定 ======
+st.sidebar.header("💡 每月預算設定")
+st.session_state.budget = st.sidebar.number_input("預算金額", value=st.session_state.budget)
+
+# ====== DataFrame ======
+df = pd.DataFrame(st.session_state.data)
+
+# ====== 主畫面 ======
+col1, col2, col3 = st.columns(3)
+
 if not df.empty:
     income = df[df["type"]=="收入"]["amount"].sum()
     expense = df[df["type"]=="支出"]["amount"].sum()
@@ -44,33 +84,4 @@ if not df.empty:
     else:
         st.success("👍 預算控制良好")
 
-    # ====== 類別分析 ======
-    if not expense_df.empty:
-        total_expense = expense_df["amount"].sum()
-        if "餐飲" in category_sum and category_sum["餐飲"] > total_expense * 0.4:
-            st.warning("🍔 餐飲支出偏高，建議減少外食")
-
-    st.divider()
-
-    # ====== 購物建議 ======
-    st.subheader("🛒 智慧購物建議")
-
-    if remaining_budget > 8000:
-        st.success("🎉 預算充足，可以適度犒賞自己！")
-    elif remaining_budget > 3000:
-        st.info("🙂 建議理性消費")
-    elif remaining_budget > 0:
-        st.warning("⚠️ 建議暫停非必要購物")
-    else:
-        st.error("❌ 不建議任何消費")
-
-    # ====== 匯出 ======
-    st.download_button(
-        label="📥 下載CSV",
-        data=df.to_csv(index=False),
-        file_name="finance_data.csv",
-        mime="text/csv"
-    )
-
-else:
     st.info("請先新增收支資料 👈")
